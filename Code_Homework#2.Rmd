@@ -1,0 +1,126 @@
+---
+title: "Homework#2"
+author: "Arinjay Jain"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r wrap-hook, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+```
+
+
+```{r, include=TRUE, tidy=TRUE, linewidth=80}
+library(class)
+library(formatR)
+
+data <-read.table(file = "C:/Arinjay_Personal/Statistical Learning/Homework#2/Grocery.txt",
+                  header = FALSE, sep = "\t")
+
+
+dataFrame <- data.frame(data)
+names(dataFrame) <- c("Y","X1", "X2", "X3")
+
+fitModel <- lm(Y ~ X1+X2+factor(X3),data = dataFrame)
+summary(fitModel)
+
+coefficients<-fitModel$coefficients
+std_Dev<- coef(summary(fitModel))[, "Std. Error"]
+z_Score<- coef(summary(fitModel))[, "t value"]
+p_Values<- coef(summary(fitModel))[, "Pr(>|t|)"]
+fitModel_Table<-cbind(coefficients, std_Dev, z_Score, p_Values)
+print(fitModel_Table)
+
+estimation_SigmaSquare<- (sum((fitModel$residuals)^2))/fitModel$df.residual
+
+cat("estimation sigma_SigmaSquare:", estimation_SigmaSquare)
+
+
+y_Hat<- predict(fitModel)
+
+```
+
+
+
+```{r,linewidth=80}
+#Stepwise
+
+library(olsrr)
+
+forward_Step<-ols_step_forward_p(fitModel)
+print(forward_Step)
+plot(ols_step_forward_p(fitModel))
+
+back_Step<-ols_step_backward_p(fitModel)
+print(back_Step)
+
+
+print("From Forward and Backward both approaches giving same results. In our final model, we will keep X1, X3 and remove X2")
+
+finalModel<- lm(Y~X1+factor(X3), data=dataFrame)
+summary(finalModel)
+
+estimation_SigmaSquare_finalModel<- (sum((finalModel$residuals)^2))/finalModel$df.residual
+
+cat("estimation sigma_SigmaSquare_finalModel:", estimation_SigmaSquare_finalModel)
+
+
+## Bestsubset using Cp Criteria 
+library(leaps)
+
+models <- regsubsets(Y~., data = dataFrame, nvmax = 3)
+
+modelSummary <- summary(models)
+
+CP = which.min(modelSummary$cp)
+
+#best model will have below predictors: 
+modelSummary$which[CP,]
+
+
+```
+
+```{r, linewidth=80}
+print("Checking the p-values in both small model and full model for the F-test to see the significance level:")
+#From part b: FinalModel #From part a: Fit model
+com <- anova(finalModel,fitModel,test='F')
+
+cat("F test value", com$F[2])
+
+cat("P-value value", com$`Pr(>F)`[2])
+
+## Using F test formula
+
+rSS_0 <- sum((finalModel$residuals)^2)
+rSS_1 <- sum((fitModel$residuals)^2)
+
+f_test = (rSS_0-rSS_1)*(fitModel$df.residual)/rSS_1
+f_test
+# F critical value
+f_critical <- qf(p = 0.95, df1 = 1, df2 = 48)
+f_critical
+if (f_test < f_critical){
+  print("The null hypothesis is accepted")
+}
+
+print("Here we can see in the small model (final model) both (x1 and x3) predictors have very significant (less then alpha{0.05}) p-value but in the full model we have X2 with non-significan  p-value. Hence, we will go with small model(final model) as it keeps the model simpler with features being statistically more significant ")
+
+
+```
+
+
+
+
