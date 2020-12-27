@@ -1,0 +1,383 @@
+---
+title: "Homework-3 Problem-3"
+output: pdf_document
+author: Arinjay Jain
+---
+
+```{r wrap-hook, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+```
+
+
+```{r, include=TRUE, linewidth=100}
+
+library(MASS)
+boston_df <- Boston
+```
+
+## Part a:
+```{r, linewidth=80}
+## Changing chas variable into factor.
+boston_df$chas <- as.factor(boston_df$chas)
+attach(boston_df)
+
+#creating vectoe for all p values
+p_values <- c()
+
+# model with "zn"
+model_zn <- lm(crim ~ zn)
+smry_zn <- summary(model_zn)
+print(smry_zn)
+pvalue_zn <- smry_zn$coefficients[2,4]
+p_values <- append(p_values, pvalue_zn)
+
+```
+
+```{r, linewidth=100}
+# model with "indus"
+model_indus <- lm(crim ~ indus)
+smry_indus <- summary(model_indus)
+print(smry_indus)
+pvalue_indus <- smry_indus$coefficients[2,4]
+p_values <- append(p_values, pvalue_indus)
+
+
+# model with "chas"
+model_chas <- lm(crim ~ chas)
+smry_chas <- summary(model_chas)
+print(smry_chas)
+pvalue_chas <- smry_chas$coefficients[2,4]
+p_values <- append(p_values, pvalue_chas)
+
+
+# model with "nox"
+model_nox <- lm(crim ~ nox)
+smry_nox <- summary(model_nox)
+print(smry_nox)
+pvalue_nox <- smry_nox$coefficients[2,4]
+p_values <- append(p_values, pvalue_nox)
+
+# model with "rm"
+model_rm <- lm(crim ~ rm)
+smry_rm <- summary(model_rm)
+print(smry_rm)
+pvalue_rm <- smry_rm$coefficients[2,4]
+p_values <- append(p_values, pvalue_rm)
+
+# model with "age"
+model_age <- lm(crim ~ age)
+smry_age <- summary(model_age)
+print(smry_age)
+pvalue_age <- smry_age$coefficients[2,4]
+p_values <- append(p_values, pvalue_age)
+
+# model with "dis"
+model_dis <- lm(crim ~ dis)
+smry_dis <- summary(model_dis)
+print(smry_dis)
+pvalue_dis <- smry_dis$coefficients[2,4]
+p_values <- append(p_values, pvalue_dis)
+
+# model with "rad"
+model_rad <- lm(crim ~ rad)
+smry_rad <- summary(model_rad)
+print(smry_rad)
+pvalue_rad <- smry_rad$coefficients[2,4]
+p_values <- append(p_values, pvalue_rad)
+
+# model with "tax"
+model_tax <- lm(crim ~ tax)
+smry_tax <- summary(model_tax)
+print(smry_tax)
+pvalue_tax <- smry_tax$coefficients[2,4]
+p_values <- append(p_values, pvalue_tax)
+
+# model with "ptratio"
+model_ptratio <- lm(crim ~ ptratio)
+smry_ptratio <- summary(model_ptratio)
+print(smry_ptratio)
+pvalue_ptratio <- smry_ptratio$coefficients[2,4]
+p_values <- append(p_values, pvalue_ptratio)
+
+# model with "black"
+model_black <- lm(crim ~ black)
+smry_black <- summary(model_black)
+print(smry_black)
+pvalue_black <- smry_black$coefficients[2,4]
+p_values <- append(p_values, pvalue_black)
+
+
+# model with "lstat"
+model_lstat <- lm(crim ~ lstat)
+smry_lstat <- summary(model_lstat)
+print(smry_lstat)
+pvalue_lstat <- smry_lstat$coefficients[2,4]
+p_values <- append(p_values, pvalue_lstat)
+
+# model with "medv"
+model_medv <- lm(crim ~ medv)
+smry_medv <- summary(model_medv)
+print(smry_medv)
+pvalue_medv <- smry_medv$coefficients[2,4]
+p_values <- append(p_values, pvalue_medv)
+
+```
+
+```{r, include = TRUE, linewidth=100}
+
+# Plot the bar chart on P values
+barplot(p_values,las=2,names.arg=colnames(boston_df)[-1],xlab="P values",col="blue",border="red")
+abline(h=0.05,lwd=1, lty="solid", col="blue")
+text(7, 0.06, "Critical value 0.05")
+
+print("Here we can clearly see the P-value of chas is greater than '0.05' that means chas is not a significant predictor for our model and we can include all other varibles in our future model.")
+
+
+## Correlation matrix
+
+res <- cor(Boston)
+print(res)
+
+library(corrplot)
+corrplot(res, type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45, sig.level = 0.05)
+```
+
+
+
+## Part b:
+```{r, linewidth=100}
+
+full_model <- lm(crim ~., data = boston_df)
+smry_full<- summary(full_model)
+print(smry_full)
+
+p_values_full_model <- smry_full$coefficients[2:14,4]
+
+# Plot the bar chart on P values
+barplot(p_values_full_model,las=2,names.arg=colnames(boston_df)[-1],xlab="P values",ylim = c(0,1),col="green",border="red")
+abline(h=0.05,lwd=1, lty="solid", col="blue")
+text(7, 0.09, "Critical value 0.05")
+
+print("From summary of full model we can reject the null hypothesis for 'zn', 'dis', 'rad', 'black' and 'medv' predictors.")
+
+```
+
+## Part c:
+
+```{r, linewidth=100}
+
+
+# getting all coff into single vector
+simple_reg_coff <- c() #empty vector
+
+simple_reg_coff <- c(model_zn$coefficients[2],model_indus$coefficients[2],model_chas$coefficients[2],model_nox$coefficients[2],model_rm$coefficients[2],model_age$coefficients[2],
+                              model_dis$coefficients[2],
+                              model_rad$coefficients[2],
+                              model_tax$coefficients[2],
+                              model_ptratio$coefficients[2],
+                              model_black$coefficients[2],
+                              model_lstat$coefficients[2],
+                              model_medv$coefficients[2])
+
+multiple_reg_coff <- full_model$coefficients[-1]
+
+plot(simple_reg_coff,multiple_reg_coff,xlab = "Univariate Regression Coefficients", ylab = "Multiple Regression Coefficients")
+
+print("Here we can the diffrence in simple regression coefficients and multiple regression cofficients and the reason behind is in the simple regression models we are considering one preditor at a time due to this the estimate cofficent beta represent the average effect of an increase in the predictor, not taking other predictors into account. On other side we have multiple regression model the estimate cofficents beta represents the average effect of an increase in the predictor, while holding other predictors fixed. It does make sense for the multiple regression to suggest no relationship between the response and some of the predictors while the simple linear regression implies the opposite because the correlation between the predictors show some strong relationships between some of the predictors.")
+
+## Correlation matrix
+
+cor_Mat <- cor(Boston[-c(1,4)])
+print(cor_Mat)
+
+## find most correlated variable
+
+cor_Mat[lower.tri(cor_Mat,diag=TRUE)]<-NA
+cor_Cof<- as.data.frame(as.table(cor_Mat))
+#removing NA
+cor_Cof<-cor_Cof[complete.cases(cor_Cof),]
+cor_Cof<-cor_Cof[order(abs(cor_Cof$Freq),decreasing = TRUE),]
+# TOP 5 STRONGEST ABSOLUTE CORRELATION
+cor_Cof[1:5,]
+
+
+print("Here we can see, 'age' and 'dis' having negative correlation , In SLR 'crim' versus 'age', we saw higher values of 'age' are associated with higher values of 'crim', even though 'age' does not actually affect 'crim'. So 'age' is a surrogate for 'dis'; 'age' gets credit for the effect of 'dis' on 'crim'.")
+
+```
+
+## Part d:Non-linear
+```{r, linewidth=100}
+## Y=??0+??1X+??2X2+??3X3+??.
+
+## I am skipping chas as perditor because it is a factor variable
+poly_p_values <- c()
+poly_p_values_2 <- c()
+poly_p_values_3 <- c()
+
+# poly model with "zn"
+poly_model_zn <- lm(crim ~ poly(zn, 3))
+smry_poly_model_zn <- summary(poly_model_zn)
+print(smry_poly_model_zn)
+poly_pvalue_zn <- smry_poly_model_zn$coefficients[2,4]
+poly_pvalue_zn_2 <- smry_poly_model_zn$coefficients[3,4]
+poly_pvalue_zn_3 <- smry_poly_model_zn$coefficients[4,4]
+poly_p_values <- append(poly_p_values, poly_pvalue_zn)
+poly_p_values_2 <- append(poly_p_values_2, poly_pvalue_zn_2)
+poly_p_values_3 <- append(poly_p_values_3, poly_pvalue_zn_3)
+
+
+# poly model with "indus"
+poly_model_indus <- lm(crim ~ poly(indus, 3))
+smry_poly_model_indus <- summary(poly_model_indus)
+print(smry_poly_model_indus)
+poly_pvalue_indus <- smry_poly_model_indus$coefficients[2,4]
+poly_pvalue_indus_2 <- smry_poly_model_indus$coefficients[3,4]
+poly_pvalue_indus_3 <- smry_poly_model_indus$coefficients[4,4]
+poly_p_values <- append(poly_p_values, poly_pvalue_indus)
+poly_p_values_2 <- append(poly_p_values_2, poly_pvalue_indus_2)
+poly_p_values_3 <- append(poly_p_values_3, poly_pvalue_indus_3)
+
+
+# poly model with "nox"
+poly_model_nox <- lm(crim ~ poly(nox, 3))
+smry_poly_model_nox <- summary(poly_model_nox)
+print(smry_poly_model_nox)
+poly_pvalue_nox <- smry_poly_model_nox$coefficients[2,4]
+poly_pvalue_nox_2 <- smry_poly_model_nox$coefficients[3,4]
+poly_pvalue_nox_3 <- smry_poly_model_nox$coefficients[4,4]
+poly_p_values <- append(poly_p_values, poly_pvalue_nox)
+poly_p_values_2 <- append(poly_p_values_2, poly_pvalue_nox_2)
+poly_p_values_3 <- append(poly_p_values_3, poly_pvalue_nox_3)
+
+
+# poly model with "rm"
+poly_model_rm <- lm(crim ~ poly(rm, 3))
+smry_poly_model_rm <- summary(poly_model_rm)
+print(smry_poly_model_rm)
+poly_pvalue_rm <- smry_poly_model_rm$coefficients[2,4]
+poly_pvalue_rm_2 <- smry_poly_model_rm$coefficients[3,4]
+poly_pvalue_rm_3 <- smry_poly_model_rm$coefficients[4,4]
+poly_p_values <- append(poly_p_values, poly_pvalue_rm)
+poly_p_values_2 <- append(poly_p_values_2, poly_pvalue_rm_2)
+poly_p_values_3 <- append(poly_p_values_3, poly_pvalue_rm_3)
+
+
+# poly model with "age"
+poly_model_age <- lm(crim ~ poly(age, 3))
+smry_poly_model_age <- summary(poly_model_age)
+print(smry_poly_model_age)
+poly_pvalue_age <- smry_poly_model_age$coefficients[2,4]
+poly_pvalue_age_2 <- smry_poly_model_age$coefficients[3,4]
+poly_pvalue_age_3 <- smry_poly_model_age$coefficients[4,4]
+poly_p_values <- append(poly_p_values, poly_pvalue_age)
+poly_p_values_2 <- append(poly_p_values_2, poly_pvalue_age_2)
+poly_p_values_3 <- append(poly_p_values_3, poly_pvalue_age_3)
+
+
+
+# poly model with "dis"
+poly_model_dis <- lm(crim ~ poly(dis, 3))
+smry_poly_model_dis <- summary(poly_model_dis)
+print(smry_poly_model_dis)
+poly_pvalue_dis <- smry_poly_model_dis$coefficients[2,4]
+poly_pvalue_dis_2 <- smry_poly_model_dis$coefficients[3,4]
+poly_pvalue_dis_3 <- smry_poly_model_dis$coefficients[4,4]
+poly_p_values <- append(poly_p_values, poly_pvalue_dis)
+poly_p_values_2 <- append(poly_p_values_2, poly_pvalue_dis_2)
+poly_p_values_3 <- append(poly_p_values_3, poly_pvalue_dis_3)
+
+# poly model with "rad"
+poly_model_rad <- lm(crim ~ poly(rad, 3))
+smry_poly_model_rad <- summary(poly_model_rad)
+print(smry_poly_model_rad)
+poly_pvalue_rad <- smry_poly_model_rad$coefficients[2,4]
+poly_pvalue_rad_2 <- smry_poly_model_rad$coefficients[3,4]
+poly_pvalue_rad_3 <- smry_poly_model_rad$coefficients[4,4]
+poly_p_values <- append(poly_p_values, poly_pvalue_rad)
+poly_p_values_2 <- append(poly_p_values_2, poly_pvalue_rad_2)
+poly_p_values_3 <- append(poly_p_values_3, poly_pvalue_rad_3)
+
+# poly model with "tax"
+poly_model_tax <- lm(crim ~ poly(tax, 3))
+smry_poly_model_tax <- summary(poly_model_tax)
+print(smry_poly_model_tax)
+poly_pvalue_tax <- smry_poly_model_tax$coefficients[2,4]
+poly_pvalue_tax_2 <- smry_poly_model_tax$coefficients[3,4]
+poly_pvalue_tax_3 <- smry_poly_model_tax$coefficients[4,4]
+poly_p_values <- append(poly_p_values, poly_pvalue_tax)
+poly_p_values_2 <- append(poly_p_values_2, poly_pvalue_tax_2)
+poly_p_values_3 <- append(poly_p_values_3, poly_pvalue_tax_3)
+
+# poly model with "ptratio"
+poly_model_ptratio <- lm(crim ~ poly(ptratio, 3))
+smry_poly_model_ptratio <- summary(poly_model_ptratio)
+print(smry_poly_model_ptratio)
+poly_pvalue_ptratio <- smry_poly_model_ptratio$coefficients[2,4]
+poly_pvalue_ptratio_2 <- smry_poly_model_ptratio$coefficients[3,4]
+poly_pvalue_ptratio_3 <- smry_poly_model_ptratio$coefficients[4,4]
+poly_p_values <- append(poly_p_values, poly_pvalue_ptratio)
+poly_p_values_2 <- append(poly_p_values_2, poly_pvalue_ptratio_2)
+poly_p_values_3 <- append(poly_p_values_3, poly_pvalue_ptratio_3)
+
+# poly model with "black"
+poly_model_black <- lm(crim ~ poly(black, 3))
+smry_poly_model_black <- summary(poly_model_black)
+print(smry_poly_model_black)
+poly_pvalue_black <- smry_poly_model_black$coefficients[2,4]
+poly_pvalue_black_2 <- smry_poly_model_black$coefficients[3,4]
+poly_pvalue_black_3 <- smry_poly_model_black$coefficients[4,4]
+poly_p_values <- append(poly_p_values, poly_pvalue_black)
+poly_p_values_2 <- append(poly_p_values_2, poly_pvalue_black_2)
+poly_p_values_3 <- append(poly_p_values_3, poly_pvalue_black_3)
+
+
+# poly model with "lstat"
+poly_model_lstat <- lm(crim ~ poly(lstat, 3))
+smry_poly_model_lstat <- summary(poly_model_lstat)
+print(smry_poly_model_lstat)
+poly_pvalue_lstat <- smry_poly_model_lstat$coefficients[2,4]
+poly_pvalue_lstat_2 <- smry_poly_model_lstat$coefficients[3,4]
+poly_pvalue_lstat_3 <- smry_poly_model_lstat$coefficients[4,4]
+poly_p_values <- append(poly_p_values, poly_pvalue_lstat)
+poly_p_values_2 <- append(poly_p_values_2, poly_pvalue_lstat_2)
+poly_p_values_3 <- append(poly_p_values_3, poly_pvalue_lstat_3)
+
+# poly model with "medv"
+poly_model_medv <- lm(crim ~ poly(medv, 3))
+smry_poly_model_medv <- summary(poly_model_medv)
+print(smry_poly_model_medv)
+poly_pvalue_medv <- smry_poly_model_medv$coefficients[2,4]
+poly_pvalue_medv_2 <- smry_poly_model_medv$coefficients[3,4]
+poly_pvalue_medv_3 <- smry_poly_model_medv$coefficients[4,4]
+poly_p_values <- append(poly_p_values, poly_pvalue_medv)
+poly_p_values_2 <- append(poly_p_values_2, poly_pvalue_medv_2)
+poly_p_values_3 <- append(poly_p_values_3, poly_pvalue_medv_3)
+
+
+
+
+# Plot the bar chart on P values for quandradic
+barplot(poly_p_values_2,las=2,names.arg=colnames(boston_df)[-c(1,4)],xlab="P values for quandradic",ylim = c(0,1),col="green",border="red")
+abline(h=0.05,lwd=1, lty="solid", col="blue")
+text(7, 0.09, "Critical value 0.05")
+
+# Plot the bar chart on P values for cubic
+barplot(poly_p_values_3,las=2,names.arg=colnames(boston_df)[-c(1,4)],xlab="P values for cubic",ylim = c(0,1),col="green",border="red")
+abline(h=0.05,lwd=1, lty="solid", col="blue")
+text(7, 0.09, "Critical value 0.05")
+
+
+print("From both graph P value for quandradic and p value for cubic we can conclude that 'zn', 'rm', 'rad', 'tax', 'black' and 'lstat' as perdictor are not statistically significant but for other predictors like 'indus', 'nox', 'age', 'dis', 'ptratio' and 'medv' with acceptable p value. In case of full model incuding all predictors in non-linear is not visible")
+```
