@@ -1,0 +1,79 @@
+---
+title: "Homework#4 Problem 2"
+author: "Arinjay Jain"
+date: "October 21, 2020"
+output: pdf_document
+---
+
+
+```{r wrap-hook, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+```
+
+```{r}
+library(class)
+library(formatR)
+```
+
+```{r, linewidth=100}
+admit_df <- read.table(file = "C:/Arinjay_Personal/Statistical Learning/Homework#4/admit.txt",
+                  header = T)
+
+admit_df <- data.frame(admit_df)
+
+# Using the logit model: The code below estimates a logistic
+#regression model using the glm (generalized linear model)
+#function. First, we convert rank to a factor to indicate that
+#rank should be treated as a categorical variable.
+
+admit_df$rank <- factor(admit_df$rank)
+
+log_model <- glm(admit~., data= admit_df, family = "binomial")
+```
+
+## Part A 
+```{r, linewidth=100}
+
+model_summary <- summary(log_model)
+coff_table <- model_summary$coefficients[,-4]
+
+print("Results from a logistic regression fit to the admit data.")
+coff_table
+
+```
+## Part B Write log-ratio equation:
+```{r, linewidth=100}
+print("log-ratio equation:")
+
+print("log(p/1-p) =-3.9899+(0.0022*gre)+(0.804*gpa)+(-0.6754*rank2)+(-1.3402*rank3)+(-1.5514*rank4)")
+
+
+## now how we will use this equation, explanation with example
+# estimated log-odds of graduate school admission for a student
+#with a GPA of 3.2 and a GRE score of 670 who attended a rank 1 
+#school?
+
+newdata <- data.frame(gre = 670, gpa = 3.2,rank = as.factor(1))
+
+# solution: 
+predict(log_model,newdata)
+
+
+
+```
+
+```{r}
+
+
+```

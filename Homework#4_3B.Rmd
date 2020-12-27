@@ -1,0 +1,144 @@
+---
+title: "Homework#4 Problem#3-B"
+author: "Arinjay Jain"
+date: "October 22, 2020"
+output: pdf_document
+---
+
+
+```{r wrap-hook, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+
+```
+
+```{r}
+classification.fun=function(train,test,i=4){
+
+		temp 	= train[,-1,with=F]
+		temp$y[temp$y!=i]=0
+		temp$y[temp$y==i]=1
+		
+		model = lm(y~.,data=temp)
+		#summary(model)
+		pred.train 	= predict(model,temp[,-1,with=F])		
+		pred.test 	= predict(model,test[,c(-1,-2),with=F])				
+		
+		return(list(model))
+	}
+
+
+# Finally predicted final prediction
+	pred.fun=function(total.model,train){
+		
+		pred.train = 
+				sapply(c(1:length(total.model)) , 
+				function(x)
+				predict(total.model[[x]],train[,c(-1,-2),with=F])
+				) %>% data.table
+		
+		colnames(pred.train) = 
+			paste("y=",c(1:length(total.model)),sep="") 
+		
+		#apply( pred.train , 1 , sum )
+		return(pred.train)
+	}
+
+```
+
+```{r, include=TRUE, linewidth=100}
+library(MASS)
+library(data.table)
+library(dplyr)
+library(readr)
+
+train_df <- read_csv("C:/Arinjay_Personal/Statistical Learning/Homework#4/vowel.train.txt", 
+    trim_ws = FALSE)
+#train_df <- data.frame(train_df)[-1]
+
+test_df <- read_csv("C:/Arinjay_Personal/Statistical Learning/Homework#4/vowel.test.txt", 
+    trim_ws = FALSE)
+#test_df <- data.frame(test_df)[-1]
+
+
+# Probability -> classification
+class.pred.fun=function(tem){
+	class.y = which( ( tem %in% max(tem) ) ==1 )
+	return(class.y)
+}
+
+```
+
+```{r, include=TRUE, linewidth=100}
+#misclassification , balance data, 11 classification
+table(train_df$y)
+
+```
+
+```{r, include=TRUE, linewidth=100}
+# Do more models, 1 vs non-1
+set.seed(100)
+temp = sapply(c(1:11), function(x) classification.fun(train_df,test_df,i=x))
+```
+
+```{r, include=TRUE, linewidth=100}
+total.model = temp
+
+pred.train = pred.fun(total.model,train_df)
+
+# Probability classification change
+pred.train.class = apply( pred.train,1,class.pred.fun)
+# confusion matrix
+t.train.matrix = table(train_df$y,pred.train.class)
+t.train.matrix
+
+
+# Correct percent
+train_acc <- sum( diag( t.train.matrix ) )/sum(t.train.matrix)
+cat("Train accuracy: ", train_acc*100, "% \n")
+
+# test before
+pred.test  = pred.fun(total.model, test_df)
+# Probability classification change
+pred.test.class = apply( pred.test,1,class.pred.fun)
+# confusion matrix
+t.test.matrix = table(test_df$y,pred.test.class)
+
+t.test.matrix
+# Correct percent
+test_acc <- sum( diag( t.test.matrix ) )/sum(t.test.matrix)
+
+cat("\n Misclassification error for the test data:", (1 -test_acc)*100, "%" )
+```
+
+
+## Using QDA
+```{r, include=TRUE, linewidth=100}
+qda_fit <- qda(y~. -row.names, data = train_df)
+
+pred <- predict(qda_fit, newdata = test_df)
+
+classes <- pred$class
+
+conf_mat <- table(classes, test_df$y)
+conf_mat
+
+# Correct percent
+qda_acc <- sum(diag(conf_mat))/sum(conf_mat)
+
+cat("\n Misclassification error for the test data using qda:", (1 -qda_acc)*100, "%" )
+
+
+
+print("we are getting better result using QDA MASS R function with 52.81% Misclassification but is computer program we are getting higer misclassification which is 66.667%")
+```
