@@ -1,0 +1,72 @@
+---
+author: "Adika Jain"
+output: pdf_document
+---
+
+```{r, warning=FALSE}
+require(ggplot2)
+require(gam)
+
+SAheard <- read.table("http://www-stat.stanford.edu/~tibs/ElemStatLearn/datasets/SAheart.data",sep=",",head=TRUE,row.names=1)
+summary(SAheard)
+names(SAheard)
+```
+
+# part A
+```{r, warning=FALSE}
+
+SAheard_Gam <- gam(chd ~ s(sbp) + s(tobacco) + s(ldl) + s(adiposity) + s(typea) +
+    s(obesity) + s(alcohol) + s(age) + famhist,data=SAheard,family=binomial)
+plot(SAheard_Gam,se=TRUE)
+
+```
+# Part B
+```{r, warning=FALSE}
+library(boot)
+Loss <- function(r, pi=0) mean(abs(r-pi)>0.5)
+likelihood <- function(r,pi=0) -mean(log(r*pi+(1-r)*(1-pi)))
+dof <- seq(1,4,by=0.1)
+
+#Using cross-validation with 7 folds
+
+SAheard_GamCv <- numeric(length(dof))
+
+for(i in seq(along=dof)){
+formGam <- as.formula(paste("chd~famhist+",paste("s(",names(SAheard[1,1:9])[-5], ",df=", dof[i], ")",sep="",collapse="+")))
+SAheard_Gam_CV <- gam(formGam,family=binomial,data=SAheard)
+tmp  <- cv.glm(SAheard,SAheard_Gam_CV,Loss,7)
+set.seed(tmp$seed)
+SAheard_GamCv[i] <- tmp$delta[1]
+}
+
+qplot(dof,SAheard_GamCv,geom="line")
+
+
+###use AIC criteria. using the effective degrees of freedom
+
+SAheard_GamAic <- numeric(length(dof))
+for(i in seq(along=dof)){
+formGam <- as.formula(paste("chd~famhist+",paste("s(",names(SAheard[1,1:9])[-5], ",df=", dof[i], ")",sep="",collapse="+")))
+SAGam_Aic <- gam(formGam,family=binomial,data=SAheard)
+SAheard_GamAic[i]  <- SAGam_Aic$aic
+}
+
+qplot(dof,SAheard_GamAic,geom="line")
+
+```
+# Part C
+```{r, warning=FALSE}
+for(i in seq(along=dof)){
+formGam <- as.formula(paste("chd~famhist+",paste("s(",names(SAheard[1,1:9])[-5], ",df=", dof[i], ")",sep="",collapse="+")))
+SAGam <- gam(formGam,family=binomial,data=SAheard)
+tmp  <- cv.glm(SAheard,SAGam,likelihood,7)
+set.seed(tmp$seed)
+SAheard_GamCv[i] <- tmp$delta[1]
+}
+
+qplot(dof,SAheard_GamCv,geom="line")
+```
+
+```{r, warning=FALSE}
+
+```

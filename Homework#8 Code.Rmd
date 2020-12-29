@@ -1,0 +1,229 @@
+---
+title: "South African Heart Disease Analysis"
+author: "Arinjay Jain"
+date: "November 30, 2020"
+output: pdf_document
+---
+
+```{r wrap-hook, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+
+```
+
+```{r}
+#install.packages("gam")
+library(gam)
+```
+
+
+```{r}
+SAheart_df <- read.table("http://www-stat.stanford.edu/~tibs/ElemStatLearn/datasets/SAheart.data",
+	sep=",",head=T,row.names=1)
+
+#Original dataset
+SA.hrt <- SAheart_df[,c(1:3,5,7,9,10)]
+head(SAheart_df)
+```
+
+
+```{r}
+library(gam)
+form = "chd ~ ns(sbp,df=4) + ns(tobacco,df=4) + ns(ldl,df=4) +  famhist +  ns(obesity,df=4) + ns(age,df=4)"
+form = formula(form)
+
+gam_model = gam(form, data=SA.hrt, family=binomial)
+print(summary(gam_model), digits=3)
+
+library(visreg)
+
+for (i in names(SA.hrt)) {
+  if(i== 'chd') next 
+visreg(gam_model, i)
+}
+```
+
+
+
+```{r}
+library(gam)
+#library(caret)
+library(dplyr)
+
+#part a
+df <- read.csv('C:/Arinjay_Personal/Statistical Learning/Homework#8/SAheart.txt',sep=",",header=TRUE)
+df$chd <- as.factor(df$chd)
+df$famhist <- as.factor(df$famhist)
+head(df)
+
+SA.gam <- gam(chd~s(sbp,df=4)+s(tobacco,df=4)+s(ldl,df=4)+famhist+s(obesity,df=4)+s(age,df=4),family=binomial(),data=df)
+
+par(mfrow=c(3,2))
+#plots
+plot(SA.gam,se=TRUE)
+
+```
+
+```{r, warning=FALSE}
+folds <- cut(seq(1,nrow(df)),breaks=7,labels=FALSE)
+
+dof <- c(1,4,5,7,8,11,15) #setting different degrees of freedom to use in GAM model
+for(i in 1:7){
+  gen_error <- 0 
+  #Segment your data by fold using the which() function 
+  testIndexes <- which(folds==i,arr.ind=TRUE)
+  testData <- df[testIndexes, ]
+  trainData <- df[-testIndexes, ]
+  
+  cat("\nFold ", i, "Degree of Freedom ", dof[i], "GAM Model Building:")
+  form = "chd ~ ns(sbp,df=dof[i]) + ns(tobacco,df=dof[i]) + ns(ldl,df=dof[i]) + ns(adiposity,df=dof[i]) + famhist + ns(typea, df=dof[i]) + ns(obesity,df=dof[i]) + ns(alcohol,df=dof[i]) + ns(age,df=dof[i])"
+  
+  form = formula(form)
+  
+  gam_model = gam(form, data=trainData, family=binomial )
+  
+  fits = predict(gam_model, newdata=testData, type='response', se=T)
+  predicts = data.frame(testData, fits) %>% 
+    mutate(lower = fit - 1.96*se.fit, upper = fit + 1.96*se.fit)
+  
+  predicts$zeroone_loss <- (-(testData$chd) * log(predicts$fit)) - (1-testData$chd) * log(1- log(predicts$fit))
+  
+  predicts['chd'] <- as.numeric(as.character(unlist(predicts['chd'])))
+  predicts$error_diff <- abs(predicts['chd'] - predicts['fit'])^2
+  
+  gen_error <- gen_error + sum(predicts$error_diff)
+  
+  print(paste("Degress of Freedom,", dof[i], '0-1 function value =', gen_error / nrow(df))) 
+}
+
+```
+
+#part-C
+```{r, warning=FALSE}
+#Create 7 equally size data frames
+folds <- cut(seq(1,nrow(df)),breaks=7,labels=FALSE)
+
+dof <- c(1,4,5,7,8,11,15) #setting different degrees of freedom to use in GAM model
+for(i in 1:7){
+  gen_error <- 0 
+  #Segment your data by fold using the which() function 
+  testIndexes <- which(folds==i,arr.ind=TRUE)
+  testData <- df[testIndexes, ]
+  trainData <- df[-testIndexes, ]
+  
+  cat("\nFold ", i, "Degree of Freedom ", dof[i], "GAM Model Building:")
+  form = "chd ~ ns(sbp,df=dof[i]) + ns(tobacco,df=dof[i]) + ns(ldl,df=dof[i]) + ns(adiposity,df=dof[i]) + famhist + ns(typea, df=dof[i]) + ns(obesity,df=dof[i]) + ns(alcohol,df=dof[i]) + ns(age,df=dof[i])"
+  
+  form = formula(form)
+  
+  gam_model = gam(form, data=trainData, family=binomial )
+  
+  fits = predict(gam_model, newdata=testData, type='response', se=T)
+  predicts = data.frame(testData, fits) %>% 
+    mutate(lower = fit - 1.96*se.fit, upper = fit + 1.96*se.fit)
+  
+  predicts$ll_loss <- (-(testData$chd) * log(predicts$fit)) - (1-testData$chd) * log(1- log(predicts$fit))
+  
+  predicts['chd'] <- as.numeric(as.character(unlist(predicts['chd'])))
+  predicts$error_diff <- abs(predicts['chd'] - predicts['fit'])^2
+  
+  gen_error <- gen_error + sum(predicts$error_diff)
+  
+  print(paste("Degress of Freedom,", dof[i], '0-1 function value =', gen_error / nrow(df))) 
+}
+```
+
+```{r,warning=FALSE}
+#part d
+
+library(mgcv)
+#library(caret)
+library(dplyr)
+
+df <- read.csv('C:/Arinjay_Personal/Statistical Learning/Homework#8/SAheart.txt',sep=",",header=TRUE)
+df$chd <- as.factor(df$chd)
+df$famhist <- as.factor(df$famhist)
+head(df)
+
+mgcv_GamModel <- mgcv::gam(chd ~ s(sbp, bs = 'cr') + s(tobacco, bs = 'cr') + s(ldl, bs = 'cr') + s(adiposity, bs = 'cr') + famhist + s(typea, bs = 'cr') + s(obesity, bs = 'cr') + s(alcohol, bs = 'cr') + s(age, bs = 'cr'), data = df, family = binomial)
+
+par(mfrow=c(3,2))
+#plots
+plot(mgcv_GamModel,se=TRUE)
+
+
+folds <- cut(seq(1,nrow(df)),breaks=7,labels=FALSE)
+
+dof <- c(1,4,5,7,8,11,15) #setting different degrees of freedom to use in GAM model
+for(i in 1:7){
+  gen_error <- 0 
+  #Segment your data by fold using the which() function 
+  testIndexes <- which(folds==i,arr.ind=TRUE)
+  testData <- df[testIndexes, ]
+  trainData <- df[-testIndexes, ]
+  
+  cat("\nFold ", i, "Degree of Freedom ", dof[i], "GAM Model Building:")
+  form = "chd ~ s(sbp, bs = 'cr') + s(tobacco, bs = 'cr') + s(ldl, bs = 'cr') + s(adiposity, bs = 'cr') + famhist + s(typea, bs = 'cr') + s(obesity, bs = 'cr') +
+                                              s(alcohol, bs = 'cr') + s(age, bs = 'cr')"
+  
+  form = formula(form)
+  
+  gam_model = mgcv::gam(form, data=trainData, family=binomial )
+  
+  fits = predict(gam_model, newdata=testData, type='response', se=T)
+  predicts = data.frame(testData, fits) %>% 
+    mutate(lower = fit - 1.96*se.fit, upper = fit + 1.96*se.fit)
+  
+  predicts$zeroone_loss <- (-(testData$chd) * log(predicts$fit)) - (1-testData$chd) * log(1- log(predicts$fit))
+  
+  predicts['chd'] <- as.numeric(as.character(unlist(predicts['chd'])))
+  predicts$error_diff <- abs(predicts['chd'] - predicts['fit'])^2
+  
+  gen_error <- gen_error + sum(predicts$error_diff)
+  
+  print(paste("Degress of Freedom,", dof[i], '0-1 function value =', gen_error / nrow(df))) 
+}
+
+
+#Create 7 equally size data frames
+folds <- cut(seq(1,nrow(df)),breaks=7,labels=FALSE)
+
+dof <- c(1,4,5,7,8,11,15) #setting different degrees of freedom to use in GAM model
+for(i in 1:7){
+  gen_error <- 0 
+  #Segment your data by fold using the which() function 
+  testIndexes <- which(folds==i,arr.ind=TRUE)
+  testData <- df[testIndexes, ]
+  trainData <- df[-testIndexes, ]
+  
+  cat("\nFold ", i, "Degree of Freedom ", dof[i], "GAM Model Building:")
+  form = "chd ~ s(sbp, bs = 'cr') + s(tobacco, bs = 'cr') + s(ldl, bs = 'cr') + s(adiposity, bs = 'cr') + famhist + s(typea, bs = 'cr') + s(obesity, bs = 'cr') +
+                                              s(alcohol, bs = 'cr') + s(age, bs = 'cr')"
+  form = formula(form)
+  
+  gam_model = gam(form, data=trainData, family=binomial )
+  
+  fits = predict(gam_model, newdata=testData, type='response', se=T)
+  predicts = data.frame(testData, fits) %>% 
+    mutate(lower = fit - 1.96*se.fit, upper = fit + 1.96*se.fit)
+  
+  predicts$ll_loss <- (-(testData$chd) * log(predicts$fit)) - (1-testData$chd) * log(1- log(predicts$fit))
+  
+  predicts['chd'] <- as.numeric(as.character(unlist(predicts['chd'])))
+  predicts$error_diff <- abs(predicts['chd'] - predicts['fit'])^2
+  
+  gen_error <- gen_error + sum(predicts$error_diff)
+  
+  print(paste("Degress of Freedom,", dof[i], '0-1 function value =', gen_error / nrow(df))) 
+}
+```

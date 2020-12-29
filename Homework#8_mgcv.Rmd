@@ -1,0 +1,15 @@
+---
+title: "MGCV"
+author: "Adika Jain"
+output: pdf_document
+---
+
+```{r}
+library(mgcv)
+SA_mgcv <- read.table("http://www-stat.stanford.edu/~tibs/ElemStatLearn/datasets/SAheart.data",sep=",",head=TRUE,row.names=1)
+
+formGam_mgcv <- as.formula(paste("chd~famhist+",paste("s(",names(SA_mgcv[1,1:9])[-5],")",sep="",collapse="+")))
+SAGam_mgcv <- gam(formGam_mgcv,family=binomial,data=SA_mgcv)
+summary(SAGam_mgcv)
+plot(SAGam_mgcv,se=TRUE)
+```
